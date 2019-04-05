@@ -1,10 +1,14 @@
+#!/usr/bin/env python3
+'''this module defines a wrapper class
+to control ftobler's robot arm'''
 import re
-import serial
-import serial.tools.list_ports as list_ports
 import struct
 import time
 from functools import reduce
 from typing import Union, List
+
+import serial
+import serial.tools.list_ports as list_ports
 
 ###########################################################################
 ##### Robot Arm by ftobler python wrapper library                         #
@@ -87,12 +91,12 @@ class RobotArm:
     #######################################################################
     # (0) Magic methods
     def __init__(
-        self,
-        attachment: int = ATTACHMENT_GRIPPER,
-        serial_port: serial.Serial = None,
-        use_default_serial_port: bool = True,
-        start_connection: bool = True,
-        verbose: bool = True
+            self,
+            attachment: int = ATTACHMENT_GRIPPER,
+            serial_port: serial.Serial = None,
+            use_default_serial_port: bool = True,
+            start_connection: bool = True,
+            verbose: bool = True
     ) -> None:
         '''constructor of RobotArm
         attachment: int - "ATTACHMENT_GRIPPER", "ATTACHMENT_FAN" | default: "ATTACHMENT_GRIPPER"
@@ -140,8 +144,9 @@ class RobotArm:
             try:
                 self.print_log("Opening connection to serial port")
                 self.serial_port.open()
-            except OSError as e:
-                self.__print_log(f"error opening serial port: {e}", force=True)
+            except OSError as err:
+                self.__print_log(
+                    f"error opening serial port: {err}", force=True)
             self._init_seq()
         else:
             raise Exception('No serial port defined')
@@ -230,12 +235,17 @@ class RobotArm:
         return self.__gcode_send(GCODE_DISABLE_FAN)
 
     # (2.2) Movement utility methods
-    def gcode_send_pos(self, x: Union[int, float], y: Union[int, float], z: Union[int, float]) -> int:
-        '''goto (x, y, z), return # bytes sent'''
-        x_str = f"{x}" if type(x) is int else f"{x:.1f}"
-        y_str = f"{y}" if type(y) is int else f"{y:.1f}"
-        z_str = f"{z}" if type(z) is int else f"{z:.1f}"
-        self.__update_pos(x, y, z)
+    def gcode_send_pos(
+            self,
+            x_pos: Union[int, float],
+            y_pos: Union[int, float],
+            z_pos: Union[int, float]
+    ) -> int:
+        '''goto (x_pos, y_pos, z_pos), return # bytes sent'''
+        x_str = f"{x_pos}" if isinstance(x_pos, int) else f"{x_pos:.1f}"
+        y_str = f"{y_pos}" if isinstance(y_pos, int) else f"{y_pos:.1f}"
+        z_str = f"{z_pos}" if isinstance(z_pos, int) else f"{z_pos:.1f}"
+        self.__update_pos(x_pos, y_pos, z_pos)
         return self.__gcode_send(GCODE_G1.format(x_str, y_str, z_str))
 
     # (2.2.1) Predefined position movement methods
@@ -340,10 +350,10 @@ class RobotArm:
         '''low-level: send gcode to Arduino, update pos, return # bytes sent'''
         for s in gcode.split(' '):
             if {
-                'X': lambda p: self.__update_pos(x=p),  # return None
-                'Y': lambda p: self.__update_pos(y=p),  # return None
-                'Z': lambda p: self.__update_pos(z=p),  # return None
-                'G': lambda p: None                     # return None
+                    'X': lambda p: self.__update_pos(x_pos=p),  # return None
+                    'Y': lambda p: self.__update_pos(y_pos=p),  # return None
+                    'Z': lambda p: self.__update_pos(z_pos=p),  # return None
+                    'G': lambda p: None                     # return None
             }.get(s[0], lambda p: "break")(s[1:]) is not None:
                 break
         return self.__gcode_send(gcode)
@@ -370,33 +380,33 @@ class RobotArm:
 
     # (4) Other utility methods
     def __update_pos(
-        self,
-        x: Union[int, float, str] = None,
-        y: Union[int, float, str] = None,
-        z: Union[int, float, str] = None
+            self,
+            x_pos: Union[int, float, str] = None,
+            y_pos: Union[int, float, str] = None,
+            z_pos: Union[int, float, str] = None
     ) -> None:
-        '''update (x, y, z) position of RobotArm (private method)'''
-        if x is not None:
-            if type(x) is str:
+        '''update (x_pos, y_pos, z_pos) position of RobotArm (private method)'''
+        if x_pos is not None:
+            if isinstance(x_pos, str):
                 try:
-                    x = int(x)
+                    x_pos = int(x_pos)
                 except ValueError:
-                    x = float(x)
-            self.__x_pos = x
-        if y is not None:
-            if type(y) is str:
+                    x_pos = float(x_pos)
+            self.__x_pos = x_pos
+        if y_pos is not None:
+            if isinstance(y_pos, str):
                 try:
-                    y = int(y)
+                    y_pos = int(y_pos)
                 except ValueError:
-                    y = float(y)
-            self.__y_pos = y
-        if z is not None:
-            if type(z) is str:
+                    y_pos = float(y_pos)
+            self.__y_pos = y_pos
+        if z_pos is not None:
+            if isinstance(z_pos, str):
                 try:
-                    z = int(z)
+                    z_pos = int(z_pos)
                 except ValueError:
-                    z = float(z)
-            self.__z_pos = z
+                    z_pos = float(z_pos)
+            self.__z_pos = z_pos
 
     def print_log(self, msg: str, end: str = '\n') -> None:
         '''print to console'''

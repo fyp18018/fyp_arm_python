@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+'''test'''
 import time
 import robotarmlib as r
 
@@ -11,7 +13,9 @@ import robotarmlib as r
 ##### Python version: 3.6+ (3.7.0)                                        #
 ###########################################################################
 
+
 def main():
+    '''main'''
     print("Testing robotarmlib")
     time.sleep(0.5)
 
@@ -36,7 +40,6 @@ def main():
     # arm.gcode_send("G1 X0.0 Y19.5 Z134.0")
     # time.sleep(0.5)
 
-
     ##################################################################
 
     arm.gcode_pos(r.POS_HOME)
@@ -44,11 +47,17 @@ def main():
 
     arm.gcode_pos(r.POS_BOTTOM)
     arm.gcode_z_coarse_neg()
+    time.sleep(0.1)
     arm.gcode_z_coarse_neg()
+    time.sleep(0.1)
     arm.gcode_z_coarse_neg()
+    time.sleep(0.1)
     arm.gcode_z_coarse_neg()
+    time.sleep(0.1)
     arm.gcode_z_coarse_neg()
+    time.sleep(0.1)
     arm.gcode_z_coarse_neg()
+    time.sleep(0.1)
     arm.gcode_z_fine_neg()
     time.sleep(0.5)
 
@@ -63,6 +72,7 @@ def main():
 
     print("all done")
     arm.close_connection()
+
 
 if __name__ == "__main__":
     main()
