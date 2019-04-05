@@ -8,7 +8,7 @@ from functools import reduce
 from typing import Union, List
 
 import serial
-import serial.tools.list_ports as list_ports
+from serial.tools import list_ports
 
 ###########################################################################
 ##### Robot Arm by ftobler python wrapper library                         #
@@ -189,7 +189,7 @@ class RobotArm:
     def gcode_attachment_high(self) -> int:
         '''turn on attachment, return # bytes sent'''
         if self.attachment == ATTACHMENT_GRIPPER:
-            return self.gcode_open_gripper()
+            return self.gcode_close_gripper()
         elif self.attachment == ATTACHMENT_FAN:
             return self.gcode_enable_fan()
         else:
@@ -200,7 +200,7 @@ class RobotArm:
     def gcode_attachment_low(self) -> int:
         '''turn off attachment, return # bytes sent'''
         if self.attachment == ATTACHMENT_GRIPPER:
-            return self.gcode_close_gripper()
+            return self.gcode_open_gripper()
         elif self.attachment == ATTACHMENT_FAN:
             return self.gcode_disable_fan()
         else:
@@ -217,11 +217,11 @@ class RobotArm:
         return self.__gcode_send(GCODE_DISABLE_MOTORS)
 
     # (2.1.1) Gripper methods
-    def gcode_open_gripper(self, t: int = 10) -> int:
+    def gcode_close_gripper(self, t: int = 10) -> int:
         '''open gripper / aux motor T in steps, return # bytes sent'''
         return self.__gcode_send(GCODE_OPEN_GRIPPER.format(t))
 
-    def gcode_close_gripper(self, t: int = 10) -> int:
+    def gcode_open_gripper(self, t: int = 10) -> int:
         '''close gripper / aux motor T in steps, return # bytes sent'''
         return self.__gcode_send(GCODE_CLOSE_GRIPPER.format(t))
 
@@ -237,11 +237,14 @@ class RobotArm:
     # (2.2) Movement utility methods
     def gcode_send_pos(
             self,
-            x_pos: Union[int, float],
-            y_pos: Union[int, float],
-            z_pos: Union[int, float]
+            x_pos: Union[int, float] = None,
+            y_pos: Union[int, float] = None,
+            z_pos: Union[int, float] = None
     ) -> int:
         '''goto (x_pos, y_pos, z_pos), return # bytes sent'''
+        x_pos = self.__x_pos if x_pos is None else x_pos
+        y_pos = self.__y_pos if y_pos is None else y_pos
+        z_pos = self.__z_pos if z_pos is None else z_pos
         x_str = f"{x_pos}" if isinstance(x_pos, int) else f"{x_pos:.1f}"
         y_str = f"{y_pos}" if isinstance(y_pos, int) else f"{y_pos:.1f}"
         z_str = f"{z_pos}" if isinstance(z_pos, int) else f"{z_pos:.1f}"
@@ -286,53 +289,66 @@ class RobotArm:
 
     def gcode_x_coarse_pos(self) -> int:
         '''move 1 coarse step in positive x direction'''
-        return self.gcode_x_delta(self.coarse_step)
+        return self.gcode_send_pos_delta(x_delta=self.coarse_step)
 
     def gcode_y_coarse_pos(self) -> int:
         '''move 1 coarse step in positive y direction'''
-        return self.gcode_y_delta(self.coarse_step)
+        return self.gcode_send_pos_delta(y_delta=self.coarse_step)
 
     def gcode_z_coarse_pos(self) -> int:
         '''move 1 coarse step in positive z direction'''
-        return self.gcode_z_delta(self.coarse_step)
+        return self.gcode_send_pos_delta(z_delta=self.coarse_step)
 
     def gcode_x_coarse_neg(self) -> int:
         '''move 1 coarse step in negative x direction'''
-        return self.gcode_x_delta(self.coarse_step * -1)
+        return self.gcode_send_pos_delta(x_delta=self.coarse_step * -1)
 
     def gcode_y_coarse_neg(self) -> int:
         '''move 1 coarse step in negative y direction'''
-        return self.gcode_y_delta(self.coarse_step * -1)
+        return self.gcode_send_pos_delta(y_delta=self.coarse_step * -1)
 
     def gcode_z_coarse_neg(self) -> int:
         '''move 1 coarse step in negative z direction'''
-        return self.gcode_z_delta(self.coarse_step * -1)
+        return self.gcode_send_pos_delta(z_delta=self.coarse_step * -1)
 
     def gcode_x_fine_pos(self) -> int:
         '''move 1 fine step in positive x direction'''
-        return self.gcode_x_delta(self.fine_step)
+        return self.gcode_send_pos_delta(x_delta=self.fine_step)
 
     def gcode_y_fine_pos(self) -> int:
         '''move 1 fine step in positive y direction'''
-        return self.gcode_y_delta(self.fine_step)
+        return self.gcode_send_pos_delta(y_delta=self.fine_step)
 
     def gcode_z_fine_pos(self) -> int:
         '''move 1 fine step in positive z direction'''
-        return self.gcode_z_delta(self.fine_step)
+        return self.gcode_send_pos_delta(z_delta=self.fine_step)
 
     def gcode_x_fine_neg(self) -> int:
         '''move 1 fine step in negative x direction'''
-        return self.gcode_x_delta(self.fine_step * -1)
+        return self.gcode_send_pos_delta(x_delta=self.fine_step * -1)
 
     def gcode_y_fine_neg(self) -> int:
         '''move 1 fine step in negative y direction'''
-        return self.gcode_y_delta(self.fine_step * -1)
+        return self.gcode_send_pos_delta(y_delta=self.fine_step * -1)
 
     def gcode_z_fine_neg(self) -> int:
         '''move 1 fine step in negative z direction'''
-        return self.gcode_z_delta(self.fine_step * -1)
+        return self.gcode_send_pos_delta(z_delta=self.fine_step * -1)
 
     # (2.2.3) Delta movement methods
+    def gcode_send_pos_delta(
+            self,
+            x_delta: Union[int] = None,
+            y_delta: Union[int] = None,
+            z_delta: Union[int] = None
+    ) -> int:
+        '''move (dx, dy, dz) delta steps'''
+        return self.gcode_send_pos(
+            x_pos=self.__x_pos + x_delta if x_delta else self.__x_pos,
+            y_pos=self.__y_pos + y_delta if y_delta else self.__y_pos,
+            z_pos=self.__z_pos + z_delta if z_delta else self.__z_pos
+        )
+
     def gcode_x_delta(self, delta: Union[int]) -> int:
         '''move delta steps in x direction'''
         return self.gcode_send_pos(self.__x_pos + delta, self.__y_pos, self.__z_pos)
@@ -348,13 +364,13 @@ class RobotArm:
     # (3) RobotArm low-level utilily methods
     def gcode_send(self, gcode: str) -> int:
         '''low-level: send gcode to Arduino, update pos, return # bytes sent'''
-        for s in gcode.split(' '):
+        for seg in gcode.split(' '):
             if {
                     'X': lambda p: self.__update_pos(x_pos=p),  # return None
                     'Y': lambda p: self.__update_pos(y_pos=p),  # return None
                     'Z': lambda p: self.__update_pos(z_pos=p),  # return None
                     'G': lambda p: None                     # return None
-            }.get(s[0], lambda p: "break")(s[1:]) is not None:
+            }.get(seg[0], lambda p: "break")(seg[1:]) is not None:
                 break
         return self.__gcode_send(gcode)
 
