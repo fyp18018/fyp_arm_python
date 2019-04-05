@@ -168,6 +168,10 @@ class RobotArm:
         return not self.is_connection_open()
 
     # (2) RobotArm high-level utilily methods
+    def get_pos(self) -> tuple:
+        '''current position of head'''
+        return (self.__x_pos, self.__y_pos, self.__z_pos)
+
     def _init_seq(self) -> None:
         '''turn on stepper motor, initialize RobotArm position (protected method)'''
         if self.__already_init:
@@ -348,18 +352,6 @@ class RobotArm:
             y_pos=self.__y_pos + y_delta if y_delta else self.__y_pos,
             z_pos=self.__z_pos + z_delta if z_delta else self.__z_pos
         )
-
-    def gcode_x_delta(self, delta: Union[int]) -> int:
-        '''move delta steps in x direction'''
-        return self.gcode_send_pos(self.__x_pos + delta, self.__y_pos, self.__z_pos)
-
-    def gcode_y_delta(self, delta: Union[int]) -> int:
-        '''move delta steps in y direction'''
-        return self.gcode_send_pos(self.__x_pos, self.__y_pos + delta, self.__z_pos)
-
-    def gcode_z_delta(self, delta: Union[int]) -> int:
-        '''move delta steps in z direction'''
-        return self.gcode_send_pos(self.__x_pos, self.__y_pos, self.__z_pos + delta)
 
     # (3) RobotArm low-level utilily methods
     def gcode_send(self, gcode: str) -> int:
